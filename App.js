@@ -1,6 +1,6 @@
 import { setStatusBarNetworkActivityIndicatorVisible, StatusBar } from 'expo-status-bar';
 import React, { Component, useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, Image, TextInput, Button, ScrollView, Alert, TouchableOpacityBase } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, Image, TextInput, Button, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import {createStackNavigator, HeaderStyleInterpolators} from '@react-navigation/stack';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -11,6 +11,7 @@ import 'react-native-gesture-handler';
 import {withNavigation} from 'react-navigation';
 import { Card, ListItem, Icon, Overlay } from 'react-native-elements';
 import { ViewBase } from 'react-native';
+import { set } from 'react-native-reanimated';
 
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
@@ -168,16 +169,55 @@ const AppContent = ( {navigation} ) => { // NavBar
 }
 const Index = ( {navigation} ) => { // index page mananger, when user clicks login he arrives here
   const [visible, setVisible] = useState(false);// toggle overlay -> view card.
-
+  const [amount, setAmount] = useState(0);
   const toggleOverlay = () => { 
     setVisible(!visible);
   }  
+
+  const onIncrement = () => {
+    setAmount(amount + 10);
+  }
+  const onDecrement = () => {
+    if(amount === 0)
+    {
+      Alert.alert('Incorrect amount', 'Please provide an amount which is atleast 10');
+    }
+    else{
+      setAmount(amount - 10);
+    }
+    
+  }
+
+  const handlePurchase = () => {
+    console.log('Purchased ' + amount + ' pieces');
+  }
+  
   // array of card objects -> create long scrollview
 
   return (
     <View>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay}>
-        <Text>TEST</Text>
+        <Card>
+            <Card.Title>PURCHASE APPLES</Card.Title>
+            <Card.Image source={require('./app/assets/poland.png')}/>
+            <Card.Divider/>
+                  <Text style={{ marginBottom: 10}}>Click below to purchase fresh apples from Poland</Text>
+                  <View style={styles.changeAmountBox}>
+                    <TouchableOpacity style={styles.changeAmount, {marginLeft: 10}} onPress={onDecrement}>
+                      <Text style={{ fontSize: 20}}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{textAlign: 'center', fontSize: 20}}>{amount}</Text>
+                    <TouchableOpacity style={styles.changeAmount} onPress={onIncrement}>
+                      <Text style={{ fontSize: 20}}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Button
+                    color='#6ECC77'
+                    icon={<Icon name='code' color='#ffffff' />}
+                    buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
+                    title='BUY NOW' onPress={handlePurchase}/>
+                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Made by: FoodMarketPlace DevTeam</Text>
+          </Card>
       </Overlay>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Card>
@@ -205,17 +245,6 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
         <Card>
           <Card.Title>FRESH PINEAPPLES</Card.Title>
           <Card.Image source={require('./app/assets/pineapples.jpg')}/>
-          <Card.Divider/>
-                <Text style={{ marginBottom: 10}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam hendrerit pharetra sodales. In viverra risus vel elit efficitur mollis. Aliquam tempor justo in lorem mattis, in pharetra magna porttitor. Nulla mattis eget augue finibus aliquam. Quisque volutpat, ipsum et dictum volutpat, leo urna volutpat urna, vitae rutrum dolor metus vel ex.</Text>
-                <Button
-                  color='#ff66ff'
-                  icon={<Icon name='code' color='#ffffff' />}
-                  buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                  title='VIEW NOW' onPress={toggleOverlay}/>
-        </Card>
-        <Card>
-          <Card.Title>DELICOUS CUCUMBERS</Card.Title>
-          <Card.Image source={require('./app/assets/cucumbers.jpg')}/>
           <Card.Divider/>
                 <Text style={{ marginBottom: 10}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam hendrerit pharetra sodales. In viverra risus vel elit efficitur mollis. Aliquam tempor justo in lorem mattis, in pharetra magna porttitor. Nulla mattis eget augue finibus aliquam. Quisque volutpat, ipsum et dictum volutpat, leo urna volutpat urna, vitae rutrum dolor metus vel ex.</Text>
                 <Button
@@ -346,5 +375,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  changeAmountBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    alignContent: 'center',
+    padding: 20,
+    marginLeft: 20
+
+  },
+  changeAmount: {
+    width: '20%'
   }
 });
