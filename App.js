@@ -9,7 +9,7 @@ import firestore from '@react-native-firebase/firestore';
 import firebase from './firebaseConfig';
 import 'react-native-gesture-handler';
 import {withNavigation} from 'react-navigation';
-import { Card, ListItem, Icon, Overlay } from 'react-native-elements';
+import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
 import { ViewBase } from 'react-native';
 import { set } from 'react-native-reanimated';
 
@@ -189,7 +189,15 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
   }
 
   const handlePurchase = () => {
-    console.log('Purchased ' + amount + ' pieces');
+    if(amount === 0)
+    {
+      Alert.alert('Unable to purchase', 'Not enough cash / incorrect amount');
+    }
+    else
+    {
+      // Process purchase
+      toggleOverlay();
+    }
   }
   
   // array of card objects -> create long scrollview
@@ -216,10 +224,12 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
                     icon={<Icon name='code' color='#ffffff' />}
                     buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
                     title='BUY NOW' onPress={handlePurchase}/>
-                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Made by: FoodMarketPlace DevTeam</Text>
+                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Sold by: foodmarketplace@devteam.com</Text>
           </Card>
       </Overlay>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={styles.titleHomepage}>NEWS</Text>
+        <Divider style={styles.dividerHomepage} />
         <Card>
           <Card.Title>NEW APPLES</Card.Title>
           <Card.Image source={require('./app/assets/apple.jpg')}/>
@@ -231,9 +241,10 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
                   buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
                   title='VIEW NOW' onPress={toggleOverlay}/>
         </Card>
+        <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
+        <Divider style={styles.dividerHomepage} />
         <Card>
-          <Card.Title>POTATOES FOR SALE</Card.Title>
-          <Card.Image source={require('./app/assets/potatoes.jpg')}/>
+          <Card.Title>Check out the store</Card.Title>
           <Card.Divider/>
                 <Text style={{ marginBottom: 10}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam hendrerit pharetra sodales. In viverra risus vel elit efficitur mollis. Aliquam tempor justo in lorem mattis, in pharetra magna porttitor. Nulla mattis eget augue finibus aliquam. Quisque volutpat, ipsum et dictum volutpat, leo urna volutpat urna, vitae rutrum dolor metus vel ex.</Text>
                 <Button
@@ -242,20 +253,8 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
                   buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
                   title='VIEW NOW' onPress={toggleOverlay}/>
         </Card>
-        <Card>
-          <Card.Title>FRESH PINEAPPLES</Card.Title>
-          <Card.Image source={require('./app/assets/pineapples.jpg')}/>
-          <Card.Divider/>
-                <Text style={{ marginBottom: 10}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam hendrerit pharetra sodales. In viverra risus vel elit efficitur mollis. Aliquam tempor justo in lorem mattis, in pharetra magna porttitor. Nulla mattis eget augue finibus aliquam. Quisque volutpat, ipsum et dictum volutpat, leo urna volutpat urna, vitae rutrum dolor metus vel ex.</Text>
-                <Button
-                  color='#ff66ff'
-                  icon={<Icon name='code' color='#ffffff' />}
-                  buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                  title='VIEW NOW' onPress={toggleOverlay}/>
-        </Card>
-        
-        <Text>TODO: add functionality to see current foods owned.</Text>
       </ScrollView>   
+
     </View>
   );
 }
@@ -387,5 +386,13 @@ const styles = StyleSheet.create({
   },
   changeAmount: {
     width: '20%'
+  },
+  dividerHomepage: {
+    backgroundColor: '#ff66ff'
+  },
+  titleHomepage: {
+    padding: 5,
+    fontSize: 20, 
+    fontWeight: 'bold'
   }
 });
