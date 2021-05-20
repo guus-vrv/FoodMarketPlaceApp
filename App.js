@@ -1,5 +1,5 @@
 import { setStatusBarNetworkActivityIndicatorVisible, StatusBar } from 'expo-status-bar';
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, Image, TextInput, Button, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import {createStackNavigator, HeaderStyleInterpolators} from '@react-navigation/stack';
@@ -12,6 +12,9 @@ import {withNavigation} from 'react-navigation';
 import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
 import { ViewBase } from 'react-native';
 import { set } from 'react-native-reanimated';
+import ClipLoader from "react-spinners/ClipLoader";
+import { css } from "@emotion/core";
+import LottieView from 'lottie-react-native';
 
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
@@ -321,6 +324,20 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
   );
 }
 export default function App() { // MAIN APP
+  let [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 5000)
+  }, [])
+
+  if(loading)
+  {
+    return(
+      <LottieView source={require('./app/assets/24703-food-animation.json')} autoPlay loop resizeMode='contain'/>
+    );
+  }
   return (
     <NavigationContainer>
       <Stack.Navigator>
