@@ -15,7 +15,7 @@ import { set } from 'react-native-reanimated';
 import ClipLoader from "react-spinners/ClipLoader";
 import { css } from "@emotion/core";
 import LottieView from 'lottie-react-native';
-
+import {List} from 'react-native-paper';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
@@ -261,8 +261,51 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
   );
 }
 const Buy = ({navigation}) => { // buy page, user will be able to buy certain foods.
+  const [expanded, setExpanded] = useState(true);
+  const [visible, setVisible] = useState(false);
+
+  const handlePress = () => setExpanded(!expanded);
+
+  const toggleOverlayPoland = () => {
+    setVisible(!visible);
+  }
+
   return(
-    <Text>Buy</Text>
+    <View>
+      <Overlay isVisible={visible} onBackdropPress={toggleOverlayPoland}>
+        <Card>
+            <Card.Title>PURCHASE APPLES</Card.Title>
+            <Card.Image source={require('./app/assets/poland.png')}/>
+            <Card.Divider/>
+                  <Text style={{ marginBottom: 10, textAlign: 'center'}}>Click below to purchase fresh apples which were grown in Poland</Text>
+                  <View style={styles.changeAmountBox}>
+                    <TouchableOpacity style={styles.changeAmount, {marginLeft: 10}}>
+                      <Text style={{ fontSize: 20, color: '#000000'}}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{textAlign: 'center', fontSize: 20, color: '#6ECC77', fontWeight: 'bold'}}> pcs</Text>
+                    <TouchableOpacity style={styles.changeAmount}>
+                      <Text style={{fontSize: 20, color: '#000000'}}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={{marginTop: 20}}>Price per apple: €1.094 </Text>
+                  <Text style={{marginTop: 20}}>Total cost of apples: </Text>
+                  <Text style={{marginTop: 20, marginBottom: 20}}>Your cash: {10000}</Text>
+                  <Button
+                    color='#6ECC77'
+                    icon={<Icon name='code' color='#ffffff' />}
+                    buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
+                    title='BUY NOW'/>
+                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Sold by: foodmarketplace@devteam.com</Text>
+          </Card>
+      </Overlay>
+      <List.Section>
+        <List.Accordion title="Apples" left={props => <List.Icon {...props} icon='cash-usd-outline'/>}>
+          <List.Item title="Poland" onPress={toggleOverlayPoland}/>
+          <List.Item title="China" />
+        </List.Accordion>
+        
+      </List.Section>
+    </View>
   );
   
 }
