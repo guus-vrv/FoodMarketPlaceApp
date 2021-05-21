@@ -19,6 +19,8 @@ import {List} from 'react-native-paper';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
+var db = firebase.firestore(); // Initialize firebase firestore database
+
 class Register extends Component { // Register class, manage text input using state and a constructor
    constructor(props) {
      super(props);
@@ -46,8 +48,11 @@ class Register extends Component { // Register class, manage text input using st
      }
      else{
       firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
-        var user = userCredential.user;
-      } ).catch((error) => {
+        return db.collection('users').doc(userCredential.user.uid).set({
+          purchases: 0,
+          apples: 0,
+        });
+      }).catch((error) => {
         var errorCode = error.code;
         var errorMessage = error.message;
         Alert.alert("Invalid input", errorMessage);
@@ -170,10 +175,11 @@ const AppContent = ( {navigation} ) => { // NavBar
     </Tab.Navigator>
   );
 }
-const Index = ( {navigation} ) => { // index page mananger, when user clicks login he arrives here
+const Index = ({navigation}) => { // index page mananger, when user clicks login he arrives here
   const [visible, setVisible] = useState(false);// toggle overlay -> view card.
   const [amount, setAmount] = useState(0);
   let today = new Date().toISOString().slice(0, 10);
+  const [purchases, setPurchases] = useState(0);
 
   const toggleOverlay = () => { 
     setVisible(!visible);
@@ -204,6 +210,13 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
       toggleOverlay();
     }
   }
+
+  let user = firebase.auth().currentUser;
+  db.collection('users').doc(user.uid).get().then((doc) => {
+    setPurchases(doc.data().purchases); // Dynamically set purchases to display to user
+  });
+
+  
   
   // array of card objects -> create long scrollview
 
@@ -252,7 +265,7 @@ const Index = ( {navigation} ) => { // index page mananger, when user clicks log
         <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
         <Divider style={styles.dividerHomepage} />
         <Text>Todays date: {today}</Text>
-        <Text>Amount of purchases: </Text>
+        <Text>Amount of purchases: {purchases}</Text>
         <Text>Currently owned foods: 1</Text>
         <Text>Current cash amount: €10000</Text>
       </ScrollView>   
