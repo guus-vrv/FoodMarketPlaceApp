@@ -5,22 +5,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import {createStackNavigator, HeaderStyleInterpolators} from '@react-navigation/stack';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import  MaterialCommunityIcons  from 'react-native-vector-icons/MaterialCommunityIcons';
-import firestore from '@react-native-firebase/firestore';
 import firebase from './firebaseConfig';
 import 'react-native-gesture-handler';
-import {withNavigation} from 'react-navigation';
 import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
-import { ViewBase } from 'react-native';
-import { set } from 'react-native-reanimated';
-import ClipLoader from "react-spinners/ClipLoader";
-import { css } from "@emotion/core";
 import LottieView from 'lottie-react-native';
 import {List} from 'react-native-paper';
+import * as ImagePicker from 'react-native-image-picker';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
 var db = firebase.firestore(); // Initialize firebase firestore database
-
+/*
 class Register extends Component { // Register class, manage text input using state and a constructor
    constructor(props) {
      super(props);
@@ -50,7 +45,18 @@ class Register extends Component { // Register class, manage text input using st
       firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
         return db.collection('users').doc(userCredential.user.uid).set({
           purchases: 0,
-          apples: 0,
+          fruits: {
+            apples: 0,
+            banana: 0,
+            blueberry: 0,
+            grapefruit: 0,
+            orange: 0,
+            peach: 0,
+            pear: 0,
+            raspberry: 0,
+            strawberry: 0,
+            tomato: 0,
+          }
         });
       }).catch((error) => {
         var errorCode = error.code;
@@ -83,7 +89,7 @@ class Register extends Component { // Register class, manage text input using st
 
   
 }
-
+*/
 const headerBar = { // predefined styles for navigator bar
   headerLeft: false,
   headerTitleAlign: 'center',
@@ -95,6 +101,7 @@ const headerBar = { // predefined styles for navigator bar
     backgroundColor: '#ff66ff'
   }
 }
+/*
 class Login extends Component { // login logic, uses firebase built-in methods to authenticate
   constructor(props) {
     super(props);
@@ -148,7 +155,7 @@ class Login extends Component { // login logic, uses firebase built-in methods t
   }
   
 }
-
+*/
 const AppContent = ( {navigation} ) => { // NavBar
   return (
     <Tab.Navigator activeColor='#6ECC77' inactiveColor='#ffffff' barStyle={{backgroundColor: '#ff66ff'}}>
@@ -176,78 +183,20 @@ const AppContent = ( {navigation} ) => { // NavBar
   );
 }
 const Index = ({navigation}) => { // index page mananger, when user clicks login he arrives here
-  const [visible, setVisible] = useState(false);// toggle overlay -> view card.
-  const [amount, setAmount] = useState(0);
   let today = new Date().toISOString().slice(0, 10);
   const [purchases, setPurchases] = useState(0);
-
-  const toggleOverlay = () => { 
-    setVisible(!visible);
-  }  
-
-  const onIncrement = () => {
-    setAmount(amount + 10);
-  }
-  const onDecrement = () => {
-    if(amount === 0)
-    {
-      Alert.alert('Incorrect amount', 'Please provide an amount which is atleast 10');
-    }
-    else{
-      setAmount(amount - 10);
-    }
-    
-  }
-
-  const handlePurchase = () => {
-    if(amount === 0)
-    {
-      Alert.alert('Unable to purchase', 'Not enough cash / incorrect amount');
-    }
-    else
-    {
-      // Process purchase
-      toggleOverlay();
-    }
-  }
-
+/*
   let user = firebase.auth().currentUser;
   db.collection('users').doc(user.uid).get().then((doc) => {
     setPurchases(doc.data().purchases); // Dynamically set purchases to display to user
   });
-
+  */
   
   
   // array of card objects -> create long scrollview
 
   return (
     <View>
-      <Overlay isVisible={visible} onBackdropPress={toggleOverlay}>
-        <Card>
-            <Card.Title>PURCHASE APPLES</Card.Title>
-            <Card.Image source={require('./app/assets/poland.png')}/>
-            <Card.Divider/>
-                  <Text style={{ marginBottom: 10, textAlign: 'center'}}>Click below to purchase fresh apples which were grown in Poland</Text>
-                  <View style={styles.changeAmountBox}>
-                    <TouchableOpacity style={styles.changeAmount, {marginLeft: 10}} onPress={onDecrement}>
-                      <Text style={{ fontSize: 20, color: '#000000'}}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={{textAlign: 'center', fontSize: 20, color: '#6ECC77', fontWeight: 'bold'}}>{amount} pcs</Text>
-                    <TouchableOpacity style={styles.changeAmount} onPress={onIncrement}>
-                      <Text style={{fontSize: 20, color: '#000000'}}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={{marginTop: 20}}>Price per apple: €1.094 </Text>
-                  <Text style={{marginTop: 20}}>Total cost of apples: €{Math.round((amount * 1.094) * 100) / 100}</Text>
-                  <Text style={{marginTop: 20, marginBottom: 20}}>Your cash: {10000}</Text>
-                  <Button
-                    color='#6ECC77'
-                    icon={<Icon name='code' color='#ffffff' />}
-                    buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                    title='BUY NOW' onPress={handlePurchase}/>
-                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Sold by: foodmarketplace@devteam.com</Text>
-          </Card>
-      </Overlay>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={styles.titleHomepage}>NEWS</Text>
         <Divider style={styles.dividerHomepage} />
@@ -260,7 +209,7 @@ const Index = ({navigation}) => { // index page mananger, when user clicks login
                   color='#ff66ff'
                   icon={<Icon name='code' color='#ffffff' />}
                   buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                  title='VIEW NOW' onPress={toggleOverlay}/>
+                  title='VIEW NOW'/>
         </Card>
         <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
         <Divider style={styles.dividerHomepage} />
@@ -274,57 +223,79 @@ const Index = ({navigation}) => { // index page mananger, when user clicks login
   );
 }
 const Buy = ({navigation}) => { // buy page, user will be able to buy certain foods.
-  const [expanded, setExpanded] = useState(true);
-  const [visible, setVisible] = useState(false);
-
-  const handlePress = () => setExpanded(!expanded);
-
-  const toggleOverlayPoland = () => {
-    setVisible(!visible);
-  }
 
   return(
     <View>
-      <Overlay isVisible={visible} onBackdropPress={toggleOverlayPoland}>
-        <Card>
-            <Card.Title>PURCHASE APPLES</Card.Title>
-            <Card.Image source={require('./app/assets/poland.png')}/>
-            <Card.Divider/>
-                  <Text style={{ marginBottom: 10, textAlign: 'center'}}>Click below to purchase fresh apples which were grown in Poland</Text>
-                  <View style={styles.changeAmountBox}>
-                    <TouchableOpacity style={styles.changeAmount, {marginLeft: 10}}>
-                      <Text style={{ fontSize: 20, color: '#000000'}}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={{textAlign: 'center', fontSize: 20, color: '#6ECC77', fontWeight: 'bold'}}> pcs</Text>
-                    <TouchableOpacity style={styles.changeAmount}>
-                      <Text style={{fontSize: 20, color: '#000000'}}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={{marginTop: 20}}>Price per apple: €1.094 </Text>
-                  <Text style={{marginTop: 20}}>Total cost of apples: </Text>
-                  <Text style={{marginTop: 20, marginBottom: 20}}>Your cash: {10000}</Text>
-                  <Button
-                    color='#6ECC77'
-                    icon={<Icon name='code' color='#ffffff' />}
-                    buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                    title='BUY NOW'/>
-                  <Text style={{ marginTop: 10, fontSize: 10, textAlign: 'center'}}>Sold by: foodmarketplace@devteam.com</Text>
-          </Card>
-      </Overlay>
-      <List.Section>
-        <List.Accordion title="Apples" left={props => <List.Icon {...props} icon='cash-usd-outline'/>}>
-          <List.Item title="Poland" onPress={toggleOverlayPoland}/>
-          <List.Item title="China" />
-        </List.Accordion>
-        
-      </List.Section>
+      <Text>Buy</Text>
     </View>
   );
   
 }
 const Sell = ({navigation}) => { // sell page, user will be able to sell their OWNED foods.
+  let [visible, setVisible] = useState(false);
+  const toggleOverlay = () => {
+    setVisible(!visible);
+  }
+  const chooseImage = () => {
+    let options = {
+      title: 'Select Image',
+      customButtons: [{name: 'customOptionKey', title: 'Choose Photo from Gallery'}],
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      }
+    };
+
+    ImagePicker.showImagePicker(options, (response) => {
+      console.log('Response ' +  response);
+
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+        alert(response.customButton);
+      } else {
+        const source = { uri: response.uri };
+      }
+    });
+  }
+
+
   return(
-    <Text>Sell</Text>
+    <View style={styles.yourProfileContent}>
+      <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
+        <View style={styles.yourProfileChangePassword}>
+            <TouchableOpacity style={{padding: 5}} onPress={chooseImage}>
+              <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
+            </TouchableOpacity>
+            <View style={{flexDirection: 'row'}}> 
+              <MaterialCommunityIcons name='pencil' size={20} color='#ff66ff' style={styles.sellIcons}/>
+              <TextInput maxLength={20} style={styles.textInput} placeholder='Title' placeholderTextColor='#ff66ff'
+              leftIcon={{ type: 'font-awesome', name: 'chevron-left' }} maxLength={20}/>
+            </View>
+            <View style={{flexDirection: 'row'}}> 
+              <MaterialCommunityIcons name='cash' size={20} color='#ff66ff' style={styles.sellIcons}/>
+              <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Price (dollars)"
+              />
+            </View>
+            <View style={{flexDirection: 'row'}}> 
+              <MaterialCommunityIcons name='book' size={20} color='#ff66ff' style={styles.sellIcons}/>
+              <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={200} multiline={true}
+                />
+            </View>
+            <Button color='#ff66ff' title="POST"/>
+            <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
+          </View>
+      </Overlay>
+      <Text style={{textAlign: 'center', fontSize: 20, fontWeight:'bold', marginBottom: 5, color: '#ff66ff'}}>Create new listing</Text>
+      <TouchableOpacity style={styles.addListing} onPress={toggleOverlay}>
+        <Text style={{color: 'white'}}>+</Text>
+      </TouchableOpacity>
+      
+    </View>
+
   );
 }
 const YourProfile = ({navigation}) => { // the users own profile, view username, cash, (change password?)
@@ -380,6 +351,7 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
   );
 }
 export default function App() { // MAIN APP
+  /*
   let [loading, setLoading] = useState(false);
   useEffect(() => {
     setLoading(true)
@@ -387,18 +359,19 @@ export default function App() { // MAIN APP
       setLoading(false)
     }, 5000)
   }, [])
-
+  // <Stack.Screen name="Login" component={Login} options={headerBar}/>
+  // <Stack.Screen name="Register" component={Register} options={headerBar}/>
   if(loading)
   {
     return(
       <LottieView source={require('./app/assets/24703-food-animation.json')} autoPlay loop resizeMode='contain'/>
     );
   }
+  */
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Login" component={Login} options={headerBar}/>
-        <Stack.Screen name="Register" component={Register} options={headerBar}/>
+        
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
       </Stack.Navigator>
     </NavigationContainer> 
@@ -474,5 +447,30 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 20, 
     fontWeight: 'bold'
+  },
+  buttonStyle: {
+    borderRadius: 20,
+    width: 20,
+  },
+  addListing: {
+    borderWidth:1,
+    borderColor:'rgba(0,0,0,0.2)',
+    alignItems:'center',
+    justifyContent:'center',
+    width:50,
+    height:50,
+    backgroundColor:'#6ECC77',
+    borderRadius:50,
+  },
+  sellPage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+
+  },
+  sellIcons: {
+    paddingTop: 10,
+    paddingRight: 5
   }
+
 });
