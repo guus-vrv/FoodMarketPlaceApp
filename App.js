@@ -1,5 +1,5 @@
 import { setStatusBarNetworkActivityIndicatorVisible, StatusBar } from 'expo-status-bar';
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState, useEffect, version } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, Image, TextInput, Button, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import {createStackNavigator, HeaderStyleInterpolators} from '@react-navigation/stack';
@@ -10,12 +10,12 @@ import 'react-native-gesture-handler';
 import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
 import LottieView from 'lottie-react-native';
 import {List} from 'react-native-paper';
-import * as ImagePicker from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
 var db = firebase.firestore(); // Initialize firebase firestore database
-/*
+
 class Register extends Component { // Register class, manage text input using state and a constructor
    constructor(props) {
      super(props);
@@ -89,7 +89,7 @@ class Register extends Component { // Register class, manage text input using st
 
   
 }
-*/
+
 const headerBar = { // predefined styles for navigator bar
   headerLeft: false,
   headerTitleAlign: 'center',
@@ -101,7 +101,7 @@ const headerBar = { // predefined styles for navigator bar
     backgroundColor: '#ff66ff'
   }
 }
-/*
+
 class Login extends Component { // login logic, uses firebase built-in methods to authenticate
   constructor(props) {
     super(props);
@@ -155,7 +155,7 @@ class Login extends Component { // login logic, uses firebase built-in methods t
   }
   
 }
-*/
+
 const AppContent = ( {navigation} ) => { // NavBar
   return (
     <Tab.Navigator activeColor='#6ECC77' inactiveColor='#ffffff' barStyle={{backgroundColor: '#ff66ff'}}>
@@ -182,46 +182,91 @@ const AppContent = ( {navigation} ) => { // NavBar
     </Tab.Navigator>
   );
 }
-const Index = ({navigation}) => { // index page mananger, when user clicks login he arrives here
-  let today = new Date().toISOString().slice(0, 10);
-  const [purchases, setPurchases] = useState(0);
-/*
-  let user = firebase.auth().currentUser;
-  db.collection('users').doc(user.uid).get().then((doc) => {
-    setPurchases(doc.data().purchases); // Dynamically set purchases to display to user
-  });
-  */
+class Index extends Component { // index page mananger, when user clicks login he arrives here
+  constructor(props) {
+      super(props);
+      this.state = {
+          posts: [[{
+            title: '',
+            price: 0,
+            description: ''
+          }]]
+      };
+      // bind functions for setState
+      this.getPost = this.getPost.bind(this);
+  }
   
+  getPost() {
+      db.collection("posts").get().then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+          // doc.data() is never undefined for query doc snapshots
+              console.log(doc.id, " => ", doc.data());
+              
+              console.log(doc.data().title, " => ", doc.data().description);
+              const newPost = [];
+              newPost.push({
+                title: doc.data().title, 
+                price: doc.data().price, 
+                description: doc.data().description,
+              });
+              this.setState(prevState => ({
+                posts: [newPost, ...prevState.posts]
+              }));
+          /*
+          posts = post.map((p) => 
+          <Card>
+          <Card.Title>{p.title}</Card.Title>
+          <Card.Image source={require('./app/assets/apple.jpg')}/>
+          <Card.Divider/>
+              <Text>{p.price}</Text>
+              <Text>{p.description}</Text>
+              <Button
+              color='#ff66ff'
+              icon={<Icon name='code' color='#ffffff' />}
+              buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
+              title='VIEW'/>
+          </Card>
+          );
+          */
+          
+          });
+      });
+
+
+
+  }
   
   // array of card objects -> create long scrollview
 
-  return (
-    <View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.titleHomepage}>NEWS</Text>
-        <Divider style={styles.dividerHomepage} />
-        <Card>
-          <Card.Title>NEW APPLES</Card.Title>
-          <Card.Image source={require('./app/assets/apple.jpg')}/>
-          <Card.Divider/>
-                <Text style={{ marginBottom: 10}}>Since 2012, part of the fruit manufactured and prepared for sale by group members has been sold through the Service2Fruit platform. The first batches of fruit sold in this way were industrial apples, delivered to the German and Dutch market. Currently, apples from Sadkowice (initially sorted or properly packaged) sold via the platform are delivered to final customers abroad as well as to local companies that act as middlemen in the fruit trade. One of the undeniable advantages of Servive2Fruit is the security of transactions. The service is licensed by a Central European bank so that no batch of goods can be sold without an advance payment.</Text>
-                <Button
-                  color='#ff66ff'
-                  icon={<Icon name='code' color='#ffffff' />}
-                  buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-                  title='VIEW NOW'/>
-        </Card>
-        <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
-        <Divider style={styles.dividerHomepage} />
-        <Text>Todays date: {today}</Text>
-        <Text>Amount of purchases: {purchases}</Text>
-        <Text>Currently owned foods: 1</Text>
-        <Text>Current cash amount: €10000</Text>
-      </ScrollView>   
+  render() {
+      const Posts = this.state.posts.map((array) => {
+          return <Card>
+            <Card.Title>{array.map((a)=> a.title)}</Card.Title>
+            <Card.Divider/>
+            <Text>{array.map((a)=> a.price)}</Text>
+            <Text>{array.map((a)=> a.description)}</Text>
+          </Card>
+        })
+      ;
+      console.log(Posts);
+      return (
+          <View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View>{Posts}</View>
+              <Text style={styles.titleHomepage} onPress={() => console.log(this.state.posts)}>FOOD LISTINGS</Text>
+              <Divider style={styles.dividerHomepage} />
+              <Text onPress={this.getPost}>test</Text>
+              <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
+              <Divider style={styles.dividerHomepage} />
+              <Text>Currently owned foods: 1</Text>
+              <Text>Current cash amount: €10000</Text>
+            </ScrollView>   
+      
+          </View>
+        );
+  }
 
-    </View>
-  );
-}
+}    
 const Buy = ({navigation}) => { // buy page, user will be able to buy certain foods.
 
   return(
@@ -233,59 +278,72 @@ const Buy = ({navigation}) => { // buy page, user will be able to buy certain fo
 }
 const Sell = ({navigation}) => { // sell page, user will be able to sell their OWNED foods.
   let [visible, setVisible] = useState(false);
+  const [image, setImage] = useState(null);
+  let [title, setTitle] = useState('');
+  let [price, setPrice] = useState('');
+  let [description, setDescription] = useState('');
+
+  const handlePost = () => {
+    try {
+      price = parseInt(price);
+      let user = firebase.auth().currentUser;
+      db.collection('posts').doc(user.uid).set({
+        title: title,
+        price: price,
+        description: description
+      })
+    }
+    catch {
+      Alert.alert('Value error', 'Please enter a numeric price!');
+    }
+  }
+
   const toggleOverlay = () => {
     setVisible(!visible);
   }
-  const chooseImage = () => {
-    let options = {
-      title: 'Select Image',
-      customButtons: [{name: 'customOptionKey', title: 'Choose Photo from Gallery'}],
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      }
-    };
+  let openImagePickerAsync = async () => {
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    ImagePicker.showImagePicker(options, (response) => {
-      console.log('Response ' +  response);
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
 
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
-        alert(response.customButton);
-      } else {
-        const source = { uri: response.uri };
-      }
-    });
+    let pickerResult = await ImagePicker.launchImageLibraryAsync();
+    if(pickerResult.cancelled === true) {
+      return;
+    }
+    setImage({localUri: pickerResult.uri});
   }
-
-
+  if(image !== null) {
+    return (
+      <Image source={{uri: image.localUri}}/>
+    );
+  }
   return(
     <View style={styles.yourProfileContent}>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
         <View style={styles.yourProfileChangePassword}>
-            <TouchableOpacity style={{padding: 5}} onPress={chooseImage}>
+            <TouchableOpacity style={{padding: 5}} onPress={openImagePickerAsync}>
+            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
             </TouchableOpacity>
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='pencil' size={20} color='#ff66ff' style={styles.sellIcons}/>
-              <TextInput maxLength={20} style={styles.textInput} placeholder='Title' placeholderTextColor='#ff66ff'
-              leftIcon={{ type: 'font-awesome', name: 'chevron-left' }} maxLength={20}/>
+              <TextInput maxLength={20} style={styles.textInput} placeholder='Title' placeholderTextColor='#ff66ff' maxLength={20}
+                    onChangeText={(title) => setTitle(title)} defaultValue={title}/>
             </View>
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='cash' size={20} color='#ff66ff' style={styles.sellIcons}/>
               <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Price (dollars)"
-              />
+                    onChangeText={(price) => setPrice(price)} defaultValue={price}   />
             </View>
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='book' size={20} color='#ff66ff' style={styles.sellIcons}/>
               <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={200} multiline={true}
-                />
+                     onChangeText={(description) => setDescription(description)} defaultValue={description}/>
             </View>
-            <Button color='#ff66ff' title="POST"/>
+            <Button color='#ff66ff' title="POST" onPress={handlePost}/>
             <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
           </View>
       </Overlay>
@@ -359,8 +417,7 @@ export default function App() { // MAIN APP
       setLoading(false)
     }, 5000)
   }, [])
-  // <Stack.Screen name="Login" component={Login} options={headerBar}/>
-  // <Stack.Screen name="Register" component={Register} options={headerBar}/>
+
   if(loading)
   {
     return(
@@ -371,7 +428,8 @@ export default function App() { // MAIN APP
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        
+        <Stack.Screen name="Login" component={Login} options={headerBar}/>
+        <Stack.Screen name="Register" component={Register} options={headerBar}/>
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
       </Stack.Navigator>
     </NavigationContainer> 
