@@ -186,14 +186,11 @@ class Index extends Component { // index page mananger, when user clicks login h
   constructor(props) {
       super(props);
       this.state = {
-          posts: [[{
-            title: '',
-            price: 0,
-            description: ''
-          }]]
+          posts: []
       };
       // bind functions for setState
       this.getPost = this.getPost.bind(this);
+      this.getPost();
   }
   
   getPost() {
@@ -208,6 +205,7 @@ class Index extends Component { // index page mananger, when user clicks login h
                 title: doc.data().title, 
                 price: doc.data().price, 
                 description: doc.data().description,
+                imageUri: doc.data().imageUri,
               });
               this.setState(prevState => ({
                 posts: [newPost, ...prevState.posts]
@@ -241,27 +239,22 @@ class Index extends Component { // index page mananger, when user clicks login h
   render() {
       const Posts = this.state.posts.map((array) => {
           return <Card>
-            <Card.Title>{array.map((a)=> a.title)}</Card.Title>
+            <Card.Title>{array.map((a)=> a.title)}</Card.Title> 
             <Card.Divider/>
+            <Card.Image source={require('./app/assets/apple.jpg')}></Card.Image>
             <Text>{array.map((a)=> a.price)}</Text>
             <Text>{array.map((a)=> a.description)}</Text>
           </Card>
-        })
-      ;
+        }).reverse();
+      
       console.log(Posts);
       return (
-          <View>
+          <View style={{flex: 1}}>
+            <Text style={styles.titleHomepage} onPress={() => console.log(this.state.posts)}>FOOD LISTINGS</Text>
+            <Divider style={styles.dividerHomepage} />
             <ScrollView showsVerticalScrollIndicator={false}>
               <View>{Posts}</View>
-              <Text style={styles.titleHomepage} onPress={() => console.log(this.state.posts)}>FOOD LISTINGS</Text>
-              <Divider style={styles.dividerHomepage} />
-              <Text onPress={this.getPost}>test</Text>
-              <Text style={styles.titleHomepage}>YOUR MARKETPLACE</Text>
-              <Divider style={styles.dividerHomepage} />
-              <Text>Currently owned foods: 1</Text>
-              <Text>Current cash amount: €10000</Text>
-            </ScrollView>   
-      
+            </ScrollView>  
           </View>
         );
   }
@@ -281,6 +274,7 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
   const [image, setImage] = useState(null);
   let [title, setTitle] = useState('');
   let [price, setPrice] = useState('');
+  let [imageUri, setImageUri] = useState('');
   let [description, setDescription] = useState('');
 
   const handlePost = () => {
@@ -290,7 +284,8 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
       db.collection('posts').doc(user.uid).set({
         title: title,
         price: price,
-        description: description
+        description: description,
+        imageUri: imageUri
       })
     }
     catch {
@@ -343,13 +338,15 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
               <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={200} multiline={true}
                      onChangeText={(description) => setDescription(description)} defaultValue={description}/>
             </View>
+            <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="ImageUri -> for dev" maxLength={50} multiline={false}
+                     onChangeText={(imageUri) => setImageUri(imageUri)} defaultValue={imageUri}/>
             <Button color='#ff66ff' title="POST" onPress={handlePost}/>
             <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
           </View>
       </Overlay>
       <Text style={{textAlign: 'center', fontSize: 20, fontWeight:'bold', marginBottom: 5, color: '#ff66ff'}}>Create new listing</Text>
       <TouchableOpacity style={styles.addListing} onPress={toggleOverlay}>
-        <Text style={{color: 'white'}}>+</Text>
+        <Text style={{color: 'white', fontSize: 30}}>+</Text>
       </TouchableOpacity>
       
     </View>
@@ -515,10 +512,11 @@ const styles = StyleSheet.create({
     borderColor:'rgba(0,0,0,0.2)',
     alignItems:'center',
     justifyContent:'center',
-    width:50,
-    height:50,
+    width:100,
+    height:100,
     backgroundColor:'#6ECC77',
-    borderRadius:50,
+    borderRadius:100,
+    textAlign: 'center'
   },
   sellPage: {
     flex: 1,
