@@ -11,6 +11,7 @@ import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
 import LottieView from 'lottie-react-native';
 import {List} from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
+import Fire from './Fire.js';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
@@ -186,46 +187,33 @@ class Index extends Component { // index page mananger, when user clicks login h
   constructor(props) {
       super(props);
       this.state = {
-          posts: []
+          posts: [],
+          
       };
       // bind functions for setState
       this.getPost = this.getPost.bind(this);
-      this.getPost();
+  }
+  
+  componentDidMount() {
+    this.getPost();
   }
   
   getPost() {
       db.collection("posts").get().then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
           // doc.data() is never undefined for query doc snapshots
-              console.log(doc.id, " => ", doc.data());
-              
-              console.log(doc.data().title, " => ", doc.data().description);
+              console.log(doc.data().image, '=> IMAGE URI');
               const newPost = [];
               newPost.push({
                 title: doc.data().title, 
                 price: doc.data().price, 
                 description: doc.data().description,
-                imageUri: doc.data().imageUri,
+                image: doc.data().image,
+                postId: doc.data().postId,
               });
               this.setState(prevState => ({
                 posts: [newPost, ...prevState.posts]
               }));
-          /*
-          posts = post.map((p) => 
-          <Card>
-          <Card.Title>{p.title}</Card.Title>
-          <Card.Image source={require('./app/assets/apple.jpg')}/>
-          <Card.Divider/>
-              <Text>{p.price}</Text>
-              <Text>{p.description}</Text>
-              <Button
-              color='#ff66ff'
-              icon={<Icon name='code' color='#ffffff' />}
-              buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0, color: '#ff'}}
-              title='VIEW'/>
-          </Card>
-          );
-          */
           
           });
       });
@@ -238,16 +226,16 @@ class Index extends Component { // index page mananger, when user clicks login h
 
   render() {
       const Posts = this.state.posts.map((array) => {
+          const images = String((array.map((a) => a.image))); // Dynamically set every picture to a post.
           return <Card>
             <Card.Title>{array.map((a)=> a.title)}</Card.Title> 
             <Card.Divider/>
-            <Card.Image source={require('./app/assets/apple.jpg')}></Card.Image>
+            <Card.Image source={{uri: images}}></Card.Image>
             <Text>{array.map((a)=> a.price)}</Text>
             <Text>{array.map((a)=> a.description)}</Text>
           </Card>
         }).reverse();
       
-      console.log(Posts);
       return (
           <View style={{flex: 1}}>
             <Text style={styles.titleHomepage} onPress={() => console.log(this.state.posts)}>FOOD LISTINGS</Text>
@@ -281,21 +269,29 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
     try {
       price = parseInt(price);
       let user = firebase.auth().currentUser;
-      db.collection('posts').doc(user.uid).set({
+      db.collection('posts').doc().set({
         title: title,
         price: price,
         description: description,
-        imageUri: imageUri
+        image: image,
+        postId: String(user.uid)
+        
+      }).then(() => {
+        toggleOverlay();
+      }).catch(error => {
+        alert(error);
       })
     }
-    catch {
-      Alert.alert('Value error', 'Please enter a numeric price!');
+    catch (error){
+      Alert.alert(error);
     }
   }
 
   const toggleOverlay = () => {
     setVisible(!visible);
   }
+
+
   let openImagePickerAsync = async () => {
     let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -304,25 +300,26 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
       return;
     }
 
-    let pickerResult = await ImagePicker.launchImageLibraryAsync();
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      aspect: [4, 3],
+      quality: 1
+    });
     if(pickerResult.cancelled === true) {
       return;
     }
-    setImage({localUri: pickerResult.uri});
+    setImage(pickerResult.uri);
   }
-  if(image !== null) {
-    return (
-      <Image source={{uri: image.localUri}}/>
-    );
-  }
+
   return(
     <View style={styles.yourProfileContent}>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
         <View style={styles.yourProfileChangePassword}>
             <TouchableOpacity style={{padding: 5}} onPress={openImagePickerAsync}>
-            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
             </TouchableOpacity>
+            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='pencil' size={20} color='#ff66ff' style={styles.sellIcons}/>
               <TextInput maxLength={20} style={styles.textInput} placeholder='Title' placeholderTextColor='#ff66ff' maxLength={20}
