@@ -7,7 +7,7 @@ import { createMaterialBottomTabNavigator } from '@react-navigation/material-bot
 import  MaterialCommunityIcons  from 'react-native-vector-icons/MaterialCommunityIcons';
 import firebase from './firebaseConfig';
 import 'react-native-gesture-handler';
-import { Card, ListItem, Icon, Overlay, Divider } from 'react-native-elements';
+import { Card, ListItem, Icon, Overlay, Divider, SearchBar } from 'react-native-elements';
 import LottieView from 'lottie-react-native';
 import {List} from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
@@ -165,11 +165,6 @@ const AppContent = ( {navigation} ) => { // NavBar
           <MaterialCommunityIcons name="home" color={color} size={26} />
         )
       }} /> 
-      <Tab.Screen name="Buy" component={Buy} options={{tabBarIcon: 
-        ({color}) => (
-          <MaterialCommunityIcons name="basket" color={color} size={26} />
-        )
-      }} /> 
       <Tab.Screen name="Sell" component={Sell} options={{tabBarIcon: 
         ({color}) => (
           <MaterialCommunityIcons name="cash" color={color} size={26} />
@@ -188,7 +183,7 @@ class Index extends Component { // index page mananger, when user clicks login h
       super(props);
       this.state = {
           posts: [],
-          
+              
       };
       // bind functions for setState
       this.getPost = this.getPost.bind(this);
@@ -197,7 +192,7 @@ class Index extends Component { // index page mananger, when user clicks login h
   componentDidMount() {
     this.getPost();
   }
-  
+
   getPost() {
       db.collection("posts").get().then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
@@ -222,17 +217,25 @@ class Index extends Component { // index page mananger, when user clicks login h
 
   }
   
+  viewPost = (postId) => {
+    this.props.navigation.navigate('View Post', {postId: postId});
+  }
   // array of card objects -> create long scrollview
 
   render() {
       const Posts = this.state.posts.map((array) => {
           const images = String((array.map((a) => a.image))); // Dynamically set every picture to a post.
           return <Card>
-            <Card.Title>{array.map((a)=> a.title)}</Card.Title> 
-            <Card.Divider/>
-            <Card.Image source={{uri: images}}></Card.Image>
-            <Text>{array.map((a)=> a.price)}</Text>
-            <Text>{array.map((a)=> a.description)}</Text>
+          <Card.Title style={{fontWeight: 'bold'}}>{array.map((a)=> a.title)}</Card.Title> 
+          <Card.Divider/>
+          {images ? <Card.Image source={{uri: images}}></Card.Image> : <Card.Image source={require('./app/assets/noimage.png')}></Card.Image>}
+          <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${array.map((a)=> a.price)}</Text>
+          <Text style={styles.cardText}>{array.map((a)=> a.description)}</Text>
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <TouchableOpacity style={styles.viewButton} onPress={() => this.viewPost(array.map((a) => a.postId))}>
+            <Text style={styles.viewText}>VIEW</Text>
+          </TouchableOpacity>
+          </View>
           </Card>
         }).reverse();
       
@@ -248,15 +251,7 @@ class Index extends Component { // index page mananger, when user clicks login h
   }
 
 }    
-const Buy = ({navigation}) => { // buy page, user will be able to buy certain foods.
 
-  return(
-    <View>
-      <Text>Buy</Text>
-    </View>
-  );
-  
-}
 const Sell = ({navigation}) => { // sell page, user will be able to sell their OWNED foods.
   let [visible, setVisible] = useState(false);
   const [image, setImage] = useState(null);
@@ -402,6 +397,14 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
     </View>
   );
 }
+
+const viewPost = ({navigation, route}) => {
+  return (
+    <View>
+      <Text>{route.params.postId} = postID </Text>
+    </View>
+  );
+}
 export default function App() { // MAIN APP
   /*
   let [loading, setLoading] = useState(false);
@@ -425,6 +428,7 @@ export default function App() { // MAIN APP
         <Stack.Screen name="Login" component={Login} options={headerBar}/>
         <Stack.Screen name="Register" component={Register} options={headerBar}/>
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
+        <Stack.Screen name="View Post" component={viewPost} options={headerBar}/>
       </Stack.Navigator>
     </NavigationContainer> 
   );
@@ -524,6 +528,24 @@ const styles = StyleSheet.create({
   sellIcons: {
     paddingTop: 10,
     paddingRight: 5
+  },
+  viewButton: {
+    backgroundColor: '#ff66ff',
+    color: 'white',
+    padding: 10,
+    borderRadius: 20,
+    width: '50%',
+    alignItems: 'center' 
+  },
+  viewText: {
+    color: 'white',
+    fontSize: 13,
+    padding: 2, 
+    fontWeight: 'bold'
+  },
+  cardText: {
+    padding: 5,
+    fontSize: 14,
   }
 
 });
