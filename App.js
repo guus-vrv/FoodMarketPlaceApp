@@ -197,14 +197,16 @@ class Index extends Component { // index page mananger, when user clicks login h
       db.collection("posts").get().then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
           // doc.data() is never undefined for query doc snapshots
-              console.log(doc.data().image, '=> IMAGE URI');
+              console.log(doc.id, '=> ID');
               const newPost = [];
               newPost.push({
                 title: doc.data().title, 
                 price: doc.data().price, 
                 description: doc.data().description,
                 image: doc.data().image,
-                postId: doc.data().postId,
+                postId: doc.data().postId, 
+                id: doc.id
+                // USER ID FOR EVERY POST
               });
               this.setState(prevState => ({
                 posts: [newPost, ...prevState.posts]
@@ -217,8 +219,8 @@ class Index extends Component { // index page mananger, when user clicks login h
 
   }
   
-  viewPost = (postId) => {
-    this.props.navigation.navigate('View Post', {postId: postId});
+  viewPost = (id) => {
+    this.props.navigation.navigate('View Post', {id: id});
   }
   // array of card objects -> create long scrollview
 
@@ -232,7 +234,7 @@ class Index extends Component { // index page mananger, when user clicks login h
           <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${array.map((a)=> a.price)}</Text>
           <Text style={styles.cardText}>{array.map((a)=> a.description)}</Text>
           <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <TouchableOpacity style={styles.viewButton} onPress={() => this.viewPost(array.map((a) => a.postId))}>
+          <TouchableOpacity style={styles.viewButton} onPress={() => this.viewPost(array.map((a) => a.id))}>
             <Text style={styles.viewText}>VIEW</Text>
           </TouchableOpacity>
           </View>
@@ -398,10 +400,43 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
   );
 }
 
-const viewPost = ({navigation, route}) => {
+const viewPost = ({navigation, route}) => { // view post when user clicks view button
+  let [post, setPost] = useState({
+    title: '',
+    image: null,
+    price: 0,
+    description: ''
+  });
+  const viewpost = () => {
+    db.collection('posts').doc(String(route.params.id)).get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        setPost({
+          title: doc.data().title,
+          image: doc.data().image,
+          price: doc.data().price,
+          description: doc.data().description
+        })
+      })
+    });
+  }
+
+  const displayPost = <Card>
+    <Card.Title style={{fontWeight: 'bold'}}>{post.title}</Card.Title> 
+    <Card.Divider/>
+    {post.image ? <Card.Image source={{uri: post.image}}></Card.Image> : <Card.Image source={require('./app/assets/noimage.png')}></Card.Image>}
+    <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${post.price}</Text>
+    <Text style={styles.cardText}>{post.description}</Text>
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <TouchableOpacity style={styles.viewButton}>
+      <Text style={styles.viewText}>VIEW</Text>
+    </TouchableOpacity>
+    </View>
+    </Card>;
+
   return (
     <View>
-      <Text>{route.params.postId} = postID </Text>
+      <Text onPress={viewpost}>click</Text>
+      <View>{displayPost}</View>
     </View>
   );
 }
