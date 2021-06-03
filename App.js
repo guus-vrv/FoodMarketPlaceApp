@@ -14,6 +14,8 @@ import * as ImagePicker from 'expo-image-picker';
 import Fire from './Fire.js';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
+import { showMessage, hideMessage} from "react-native-flash-message";
+import FlashMessage from "react-native-flash-message";
 
 
 var db = firebase.firestore(); // Initialize firebase firestore database
@@ -171,7 +173,12 @@ const AppContent = ( {navigation} ) => { // NavBar
           <MaterialCommunityIcons name="cash" color={color} size={26} />
         )
       }} />
-      <Tab.Screen name="Your profile" component={YourProfile} options={{tabBarIcon: 
+      <Tab.Screen name="Your listings" component={YourListings} options={{tabBarIcon: 
+        ({color}) => (
+          <MaterialCommunityIcons name="clipboard-check-outline" color={color} size={26} />
+        )
+      }} />
+      <Tab.Screen name="Your account" component={YourAccount} options={{tabBarIcon: 
         ({color}) => (
           <MaterialCommunityIcons name="account-circle" color={color} size={26} />
         )
@@ -195,26 +202,27 @@ class Index extends Component { // index page mananger, when user clicks login h
   }
 
   getPost() {
-      db.collection("posts").get().then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
-              console.log(doc.id, '=> ID');
-              const newPost = [];
-              newPost.push({
-                title: doc.data().title, 
-                price: doc.data().price, 
-                description: doc.data().description,
-                image: doc.data().image,
-                postId: doc.data().postId, 
-                id: doc.id
-                // USER ID FOR EVERY POST
-              });
-              this.setState(prevState => ({
-                posts: [newPost, ...prevState.posts]
-              }));
-          
-          });
-      });
+    let user = firebase.auth().currentUser;
+    db.collection("posts").where('postId', '!=', user.uid).get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+            console.log(doc.id, '=> ID');
+            const newPost = [];
+            newPost.push({
+              title: doc.data().title, 
+              price: doc.data().price, 
+              description: doc.data().description,
+              image: doc.data().image,
+              postId: doc.data().postId, 
+              id: doc.id
+              // USER ID FOR EVERY POST
+            });
+            this.setState(prevState => ({
+              posts: [newPost, ...prevState.posts]
+            }));
+        
+        });
+    });
 
 
 
@@ -311,9 +319,9 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
   }
 
   return(
-    <View style={styles.yourProfileContent}>
+    <View style={styles.yourAccountContent}>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
-        <View style={styles.yourProfileChangePassword}>
+        <View style={styles.yourAccountChangePassword}>
             <TouchableOpacity style={{marginBottom: 50}} onPress={openImagePickerAsync}>
               <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
             </TouchableOpacity>
@@ -346,7 +354,69 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
 
   );
 }
-const YourProfile = ({navigation}) => { // the users own profile, view username, cash, (change password?)
+
+class YourListings extends Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      yourPosts: []
+    }
+    this.getYourPosts = this.getYourPosts.bind(this)
+  }
+
+  componentDidMount() {
+    this.getYourPosts();
+  }
+
+  getYourPosts() {
+    let user = firebase.auth().currentUser;
+    db.collection("posts").where("postId", "==", user.uid).get().then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+          const newPosts = [];
+          newPosts.push({
+            title: doc.data().title, 
+            price: doc.data().price, 
+            description: doc.data().description,
+            image: doc.data().image,
+            postId: doc.data().postId, 
+            id: doc.id
+            // USER ID FOR EVERY POST
+          });
+          this.setState(prevState => ({
+            yourPosts: [newPosts, ...prevState.yourPosts]
+          }));
+      
+      });
+  });
+  }
+
+  render() {
+    let yourPosts = this.state.yourPosts.map((array) => {
+      let images = String((array.map((a) => a.image))); // Dynamically set every picture to a post.
+      return <Card>
+      <Card.Title style={{fontWeight: 'bold'}}>{array.map((a)=> a.title)}</Card.Title> 
+      <Card.Divider/>
+      {images ? <Card.Image source={{uri: images}}></Card.Image> : <Card.Image source={require('./app/assets/noimage.png')}></Card.Image>}
+      <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${array.map((a)=> a.price)}</Text>
+      <Text style={styles.cardText}>{array.map((a)=> a.description)}</Text>
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <TouchableOpacity style={styles.viewButton} onPress={() => this.viewPost(array.map((a) => a.id))}>
+        <Text style={styles.viewText}>VIEW</Text>
+      </TouchableOpacity>
+      </View>
+      </Card>
+    });
+    
+    return (
+      <ScrollView>
+        {yourPosts}
+      </ScrollView>
+    );
+  }
+}
+
+const YourAccount = ({navigation}) => { // the users own profile, view username, cash, (change password?)
   const [visible, setVisible] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordAgain, setPasswordAgain] = useState('');
@@ -358,7 +428,7 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
     }
     else{
       // get password from input
-      const user = firebase.auth().currentUser;
+      let user = firebase.auth().currentUser;
       user.updatePassword(password).then(function() {
         toggleOverlay();
       }).catch(function(error) {
@@ -379,9 +449,9 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
   }
 
   return(
-    <View style={styles.yourProfileContent}>
+    <View style={styles.yourAccountContent}>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
-        <View style={styles.yourProfileChangePassword}>
+        <View style={styles.yourAccountChangePassword}>
             <TextInput maxLength={20} secureTextEntry={true} style={styles.textInput} placeholder='Password' placeholderTextColor='#ff66ff'
             leftIcon={{ type: 'font-awesome', name: 'chevron-left' }} onChangeText={(password) => setPassword(password)} defaultValue={password}/>
             <TextInput style={styles.textInput} secureTextEntry={true} placeholderTextColor='#ff66ff' placeholder="Password-again"
@@ -448,17 +518,22 @@ class ViewPost extends Component {
         <TouchableOpacity style={styles.goBack} onPress={() => this.props.navigation.navigate('Your Food MarketPlace')}>
             <Text style={styles.viewText}>Go back</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={{flex: 1, alignItems: 'center'}}>
-          <Image source={require('./app/assets/like.png')} style={styles.likeImage}/>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.viewButton}>
+        <TouchableOpacity style={styles.viewButton} onPress={() => {
+          showMessage({
+            message: 'Message sent.',
+            type: 'success'
+          });
+        }}>
           <Text style={styles.viewText}>Im interested.</Text>
         </TouchableOpacity>
       </View>
       </Card>
     })
     return(
+      <View>
+        <FlashMessage position="top" />
         <ScrollView >{currentPost}</ScrollView>
+      </View>
     );
   }
 }
@@ -537,14 +612,14 @@ const styles = StyleSheet.create({
     color: '#ff66ff',
     paddingBottom: 20
   },
-  yourProfileContent: {
+  yourAccountContent: {
     flex: 1,
     flexDirection: 'column',
     alignItems: 'center', 
     justifyContent: 'center',
     alignContent: 'center',
   },
-  yourProfileChangePassword: {
+  yourAccountChangePassword: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
