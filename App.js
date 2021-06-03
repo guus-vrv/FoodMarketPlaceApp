@@ -15,6 +15,7 @@ import Fire from './Fire.js';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
 
+
 var db = firebase.firestore(); // Initialize firebase firestore database
 
 class Register extends Component { // Register class, manage text input using state and a constructor
@@ -226,7 +227,7 @@ class Index extends Component { // index page mananger, when user clicks login h
 
   render() {
       const Posts = this.state.posts.map((array) => {
-          const images = String((array.map((a) => a.image))); // Dynamically set every picture to a post.
+          let images = String((array.map((a) => a.image))); // Dynamically set every picture to a post.
           return <Card>
           <Card.Title style={{fontWeight: 'bold'}}>{array.map((a)=> a.title)}</Card.Title> 
           <Card.Divider/>
@@ -313,27 +314,25 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
     <View style={styles.yourProfileContent}>
       <Overlay isVisible={visible} onBackdropPress={toggleOverlay} fullScreen={true}>
         <View style={styles.yourProfileChangePassword}>
-            <TouchableOpacity style={{padding: 5}} onPress={openImagePickerAsync}>
+            <TouchableOpacity style={{marginBottom: 50}} onPress={openImagePickerAsync}>
               <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
             </TouchableOpacity>
-            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+            {image && <Image source={{ uri: image }} style={{ width: 200, height: 200, marginBottom: 50 }} />}
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='pencil' size={20} color='#ff66ff' style={styles.sellIcons}/>
-              <TextInput maxLength={20} style={styles.textInput} placeholder='Title' placeholderTextColor='#ff66ff' maxLength={20}
+              <TextInput maxLength={20} style={styles.textInputSell} placeholder='Title' placeholderTextColor='#ff66ff' maxLength={20}
                     onChangeText={(title) => setTitle(title)} defaultValue={title}/>
             </View>
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='cash' size={20} color='#ff66ff' style={styles.sellIcons}/>
-              <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Price (dollars)"
+              <TextInput style={styles.textInputSell} placeholderTextColor='#ff66ff' placeholder="Price (dollars)"
                     onChangeText={(price) => setPrice(price)} defaultValue={price}   />
             </View>
             <View style={{flexDirection: 'row'}}> 
               <MaterialCommunityIcons name='book' size={20} color='#ff66ff' style={styles.sellIcons}/>
-              <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={200} multiline={true}
+              <TextInput style={styles.textInputSell} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={1000} multiline={true}
                      onChangeText={(description) => setDescription(description)} defaultValue={description}/>
             </View>
-            <TextInput style={styles.textInput} placeholderTextColor='#ff66ff' placeholder="ImageUri -> for dev" maxLength={50} multiline={false}
-                     onChangeText={(imageUri) => setImageUri(imageUri)} defaultValue={imageUri}/>
             <Button color='#ff66ff' title="POST" onPress={handlePost}/>
             <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
           </View>
@@ -400,45 +399,68 @@ const YourProfile = ({navigation}) => { // the users own profile, view username,
   );
 }
 
-const viewPost = ({navigation, route}) => { // view post when user clicks view button
-  let [post, setPost] = useState({
-    title: '',
-    image: null,
-    price: 0,
-    description: ''
-  });
-  const viewpost = () => {
-    db.collection('posts').doc(String(route.params.id)).get().then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        setPost({
-          title: doc.data().title,
-          image: doc.data().image,
-          price: doc.data().price,
-          description: doc.data().description
-        })
-      })
-    });
+class ViewPost extends Component {
+  constructor(props) {
+      super(props);
+      this.state = {
+          currentPost: [],
+      }
+      this.getPost = this.getPost.bind(this);
   }
 
-  const displayPost = <Card>
-    <Card.Title style={{fontWeight: 'bold'}}>{post.title}</Card.Title> 
-    <Card.Divider/>
-    {post.image ? <Card.Image source={{uri: post.image}}></Card.Image> : <Card.Image source={require('./app/assets/noimage.png')}></Card.Image>}
-    <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${post.price}</Text>
-    <Text style={styles.cardText}>{post.description}</Text>
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-    <TouchableOpacity style={styles.viewButton}>
-      <Text style={styles.viewText}>VIEW</Text>
-    </TouchableOpacity>
-    </View>
-    </Card>;
+  componentDidMount() {
+    this.getPost();
+  }
 
-  return (
-    <View>
-      <Text onPress={viewpost}>click</Text>
-      <View>{displayPost}</View>
-    </View>
-  );
+  getPost() {
+    db.collection('posts').where(firebase.firestore.FieldPath.documentId(), '==', String(this.props.route.params.id)).get().then((querySnapshot) => { 
+      if(!(querySnapshot.empty))
+      {
+        querySnapshot.forEach((doc) => {
+            doc.data().title ? doc.data().title : console.log('no')
+            let viewpost = [];
+            viewpost.push({
+            title: doc.data().title,
+            image: doc.data().image,
+            price: doc.data().price,
+            description: doc.data().description
+            });
+            this.setState({
+              currentPost: viewpost
+            });
+      
+        })
+      }
+    });
+    
+  }
+
+  render() {
+    let currentPost = this.state.currentPost.map((element) => {
+      let images = element.image;
+      return <Card>
+      <Card.Title style={{fontWeight: 'bold'}}>{element.title}</Card.Title> 
+      <Card.Divider/>
+      {images ? <Card.Image source={{uri: images}}></Card.Image> : <Card.Image source={require('./app/assets/noimage.png')}></Card.Image>}
+      <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${element.price}</Text>
+      <Text style={styles.cardText}>{element.description}</Text>
+      <View style={{justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row'}}>
+        <TouchableOpacity style={styles.goBack} onPress={() => this.props.navigation.navigate('Your Food MarketPlace')}>
+            <Text style={styles.viewText}>Go back</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{flex: 1, alignItems: 'center'}}>
+          <Image source={require('./app/assets/like.png')} style={styles.likeImage}/>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.viewButton}>
+          <Text style={styles.viewText}>Im interested.</Text>
+        </TouchableOpacity>
+      </View>
+      </Card>
+    })
+    return(
+        <ScrollView >{currentPost}</ScrollView>
+    );
+  }
 }
 export default function App() { // MAIN APP
   /*
@@ -463,7 +485,7 @@ export default function App() { // MAIN APP
         <Stack.Screen name="Login" component={Login} options={headerBar}/>
         <Stack.Screen name="Register" component={Register} options={headerBar}/>
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
-        <Stack.Screen name="View Post" component={viewPost} options={headerBar}/>
+        <Stack.Screen name="View Post" component={ViewPost} options={headerBar}/>
       </Stack.Navigator>
     </NavigationContainer> 
   );
@@ -489,6 +511,15 @@ const styles = StyleSheet.create({
     height: 40,
     marginBottom: 20,
     textAlign: 'center'
+  },
+  textInputSell: {
+    backgroundColor: '#6ECC77',
+    width: 300,
+    borderRadius: 20,
+    height: 40,
+    marginBottom: 20,
+    textAlign: 'center',
+    marginRight: 20
   },
   logo: {
     height: 220
@@ -569,7 +600,7 @@ const styles = StyleSheet.create({
     color: 'white',
     padding: 10,
     borderRadius: 20,
-    width: '50%',
+    width: '35%',
     alignItems: 'center' 
   },
   viewText: {
@@ -581,6 +612,20 @@ const styles = StyleSheet.create({
   cardText: {
     padding: 5,
     fontSize: 14,
+  },
+  goBack: {
+    backgroundColor: '#B2BABB',
+    color: 'white',
+    padding: 10,
+    borderRadius: 20,
+    width: '35%',
+    alignItems: 'center' 
+  },
+  likeImage: {
+    height: 80,
+    width: 80,
+
+
   }
 
 });
