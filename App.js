@@ -29,6 +29,13 @@ class Register extends Component { // Register class, manage text input using st
      }
    }
 
+   showMessage() {
+     showMessage({
+       message: "Successfully registered user!",
+       type: "success"
+     })
+   }
+
    inputValueUpdate = (val, prop) =>
    {
     const state = this.state;
@@ -46,22 +53,14 @@ class Register extends Component { // Register class, manage text input using st
        Alert.alert('Missing password', 'Please enter your password.');
      }
      else{
+      this.props.navigation.navigate('Login', {message: true});
       firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
         return db.collection('users').doc(userCredential.user.uid).set({
-          purchases: 0,
-          fruits: {
-            apples: 0,
-            banana: 0,
-            blueberry: 0,
-            grapefruit: 0,
-            orange: 0,
-            peach: 0,
-            pear: 0,
-            raspberry: 0,
-            strawberry: 0,
-            tomato: 0,
-          }
+          // potential stats -> purchases 
+          purchases: 0
+          
         });
+      
       }).catch((error) => {
         var errorCode = error.code;
         var errorMessage = error.message;
@@ -368,6 +367,10 @@ class YourListings extends Component {
     this.getYourPosts();
   }
 
+  editPost = (id) => {
+    this.props.navigation.navigate('Edit Post', {id: id});
+  }
+
   getYourPosts() {
     let user = firebase.auth().currentUser;
     db.collection("posts").where("postId", "==", user.uid).get().then((querySnapshot) => {
@@ -401,8 +404,8 @@ class YourListings extends Component {
       <Text style={styles.cardText, {textAlign: 'center', paddingTop: 5}}>Price: ${array.map((a)=> a.price)}</Text>
       <Text style={styles.cardText}>{array.map((a)=> a.description)}</Text>
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <TouchableOpacity style={styles.viewButton} onPress={() => this.viewPost(array.map((a) => a.id))}>
-        <Text style={styles.viewText}>VIEW</Text>
+      <TouchableOpacity style={styles.viewButton} onPress={() => this.editPost(array.map((a) => a.id))}>
+        <Text style={styles.viewText}>EDIT</Text>
       </TouchableOpacity>
       </View>
       </Card>
@@ -438,9 +441,22 @@ const YourAccount = ({navigation}) => { // the users own profile, view username,
     }
   }
 
+
+
   const toggleOverlay = () => {
     setVisible(!visible);
   }
+
+  const signOut = () => {
+    firebase.auth().signOut().then(() => {   
+      navigation.navigate('Login')
+      
+
+    }).catch((err) => {
+      Alert.alert(err);
+    })
+  }
+  
 
   var user = firebase.auth().currentUser;
   var email;
@@ -463,9 +479,11 @@ const YourAccount = ({navigation}) => { // the users own profile, view username,
       <MaterialCommunityIcons name="account-circle" color={'#ff66ff'} size={50}/>
       <Text style={{fontWeight: 'bold'}}>Your Email: {email}</Text>        
       <MaterialCommunityIcons name="lock" color={'#ff66ff'} size={50} style={{marginTop: 20}}/> 
-      <Button title='CHANGE PASSWORD' color="#ff66ff" onPress={toggleOverlay}/>
+      <Button style={{marginBottom: 20}}title='CHANGE PASSWORD' color="#ff66ff" onPress={toggleOverlay}/>
       
+      <Button title='LOGOUT' color="#ff66ff" onPress={signOut}/>
     </View>
+    
   );
 }
 
@@ -537,6 +555,145 @@ class ViewPost extends Component {
     );
   }
 }
+
+class EditPost extends Component {
+  constructor(props) {
+      super(props);
+      this.state = {
+          currentPost: [],
+          visible: false,
+          title: "",
+          price: "",
+          description: "",
+      }
+      this.getPost = this.getPost.bind(this);
+  }
+
+  componentDidMount() {
+    this.getPost();
+  }
+
+  toggleOverlay(){
+    this.setState({
+      visible: !visible,
+    })
+  }
+
+  handlePost(){
+    try {
+      price = parseInt(price);
+      let user = firebase.auth().currentUser;
+      db.collection('posts').doc().set({
+        title: title,
+        price: price,
+        description: description,
+        image: image,
+        postId: String(user.uid)
+        
+      }).then(() => {
+        toggleOverlay();
+      }).catch(error => {
+        alert(error);
+      })
+    }
+    catch (error){
+      Alert.alert(error);
+    }
+  }
+
+  openImagePickerAsync(){
+    let permissionResult = ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    let pickerResult = ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      aspect: [4, 3],
+      quality: 1
+    });
+    if(pickerResult.cancelled === true) {
+      return;
+    }
+    setImage(pickerResult.uri);
+  }
+
+  getPost() {
+    db.collection('posts').where(firebase.firestore.FieldPath.documentId(), '==', String(this.props.route.params.id)).get().then((querySnapshot) => { 
+      if(!(querySnapshot.empty))
+      {
+        querySnapshot.forEach((doc) => {
+            doc.data().title ? doc.data().title : console.log('no')
+            let viewpost = [];
+            viewpost.push({
+            title: doc.data().title,
+            image: doc.data().image,
+            price: doc.data().price,
+            description: doc.data().description
+            });
+            this.setState({
+              currentPost: viewpost
+            });
+      
+        })
+      }
+    });
+    
+  }
+
+  render() {
+    let currentPost = this.state.currentPost.map((element) => {
+      let images = element.image;
+      return <View>
+        <View style={styles.yourAccountChangePassword}>
+        <TouchableOpacity style={{marginBottom: 50}} onPress={this.openImagePickerAsync}>
+          <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
+        </TouchableOpacity>
+        {images && <Image source={{ uri: images }} style={{ width: 200, height: 200, marginBottom: 50 }} />}
+        <View style={{flexDirection: 'row'}}> 
+          <MaterialCommunityIcons name='pencil' size={20} color='#ff66ff' style={styles.sellIcons}/>
+          <TextInput maxLength={20} style={styles.textInputSell} placeholder='Title' placeholderTextColor='#ff66ff' maxLength={20}
+                onChangeText={(title) => this.setState({title: title})} defaultValue={this.state.title}/>
+        </View>
+        <View style={{flexDirection: 'row'}}> 
+          <MaterialCommunityIcons name='cash' size={20} color='#ff66ff' style={styles.sellIcons}/>
+          <TextInput style={styles.textInputSell} placeholderTextColor='#ff66ff' placeholder="Price (dollars)"
+                onChangeText={(price) => this.setState({price: price})} defaultValue={this.state.price}   />
+        </View>
+        <View style={{flexDirection: 'row'}}> 
+          <MaterialCommunityIcons name='book' size={20} color='#ff66ff' style={styles.sellIcons}/>
+          <TextInput style={styles.textInputSell} placeholderTextColor='#ff66ff' placeholder="Description" maxLength={1000} multiline={true}
+                onChangeText={(description) => this.setState({description: description})} defaultValue={this.state.description}/>
+        </View>
+        </View>
+        <View style={{justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row'}}>
+          <TouchableOpacity style={styles.goBack} onPress={() => this.props.navigation.navigate('Your Food MarketPlace')}>
+              <Text style={styles.viewText}>Go back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.viewButton} onPress={() => {
+            showMessage({
+              message: 'Post Saved.',
+              type: 'success'
+            });
+            this.handlePost();
+          }}>
+            <Text style={styles.viewText}>SAVE</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    })
+    return(
+      <View>
+        <FlashMessage position="top" />
+        <ScrollView >{currentPost}</ScrollView>
+      </View>
+    );
+  }
+}
+
 export default function App() { // MAIN APP
   /*
   let [loading, setLoading] = useState(false);
@@ -561,6 +718,7 @@ export default function App() { // MAIN APP
         <Stack.Screen name="Register" component={Register} options={headerBar}/>
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
         <Stack.Screen name="View Post" component={ViewPost} options={headerBar}/>
+        <Stack.Screen name="Edit Post" component={EditPost} options={headerBar}/>
       </Stack.Navigator>
     </NavigationContainer> 
   );
