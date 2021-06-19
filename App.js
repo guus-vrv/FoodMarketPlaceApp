@@ -12,28 +12,31 @@ import LottieView from 'lottie-react-native';
 import {List} from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import Fire from './Fire.js';
+import DropdownAlert from 'react-native-dropdownalert';
 const Stack = createStackNavigator(); // manage page navigation login -> home
 const Tab = createMaterialBottomTabNavigator(); // bottom page navigator for content in the app
-import { showMessage, hideMessage} from "react-native-flash-message";
-import FlashMessage from "react-native-flash-message";
+
 
 
 var db = firebase.firestore(); // Initialize firebase firestore database
+
+export class DropDownHolder {
+  static dropDown;
+  static setDropDown(dropDown) {
+      this.dropDown = dropDown;
+  }
+  static getDropDown() {
+      return this.dropDown;
+  }
+}
 
 class Register extends Component { // Register class, manage text input using state and a constructor
    constructor(props) {
      super(props);
      this.state = {
        email: '',
-       password: ''
+       password: '',
      }
-   }
-
-   showMessage() {
-     showMessage({
-       message: "Successfully registered user!",
-       type: "success"
-     })
    }
 
    inputValueUpdate = (val, prop) =>
@@ -43,6 +46,9 @@ class Register extends Component { // Register class, manage text input using st
     this.setState(state);
      
    }
+
+
+
    addUser(email, password){
      if(email == '')
      {
@@ -53,15 +59,12 @@ class Register extends Component { // Register class, manage text input using st
        Alert.alert('Missing password', 'Please enter your password.');
      }
      else{
-      this.props.navigation.navigate('Login', {message: true});
-      firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
-        return db.collection('users').doc(userCredential.user.uid).set({
-          // potential stats -> purchases 
-          purchases: 0
-          
-        });
-      
-      }).catch((error) => {
+      this.dropDownAlertRef.alertWithType('success', 'Successfully registered!', 'You will now be redirected.');
+      setTimeout(() => 
+      {
+        this.props.navigation.navigate('Login');
+      }, 2000);
+      firebase.auth().createUserWithEmailAndPassword(email, password).catch((error) => {
         var errorCode = error.code;
         var errorMessage = error.message;
         Alert.alert("Invalid input", errorMessage);
@@ -76,6 +79,7 @@ class Register extends Component { // Register class, manage text input using st
   render() {
     return(
       <SafeAreaView style={styles.container}>
+        <DropdownAlert ref={ref => this.dropDownAlertRef = ref} />
         <View style={styles.form}>
           <Text style={styles.title}>Create an account below</Text>
           <TextInput maxLength={20} style={styles.textInput} placeholder='Username' placeholderTextColor='#ff66ff'
@@ -110,8 +114,11 @@ class Login extends Component { // login logic, uses firebase built-in methods t
     super(props);
     this.state = {
       email: '',
-      password: ''
-    }
+      password: '',
+    };
+  }
+  componentDidMount() {
+    
   }
 
   inputValueUpdate = (val, prop) => {
@@ -130,10 +137,8 @@ class Login extends Component { // login logic, uses firebase built-in methods t
     }
     else{
       firebase.auth().signInWithEmailAndPassword(email, password).then((userCredential) => {
-        var user = userCredential.user;
         this.props.navigation.navigate('Your Food MarketPlace');
        } ).catch((error) => {
-         var errorCode = error.code;
          var errorMessage = error.message;
          Alert.alert("Invalid input", errorMessage);
        })
@@ -141,9 +146,17 @@ class Login extends Component { // login logic, uses firebase built-in methods t
   }
 
   render() {
+    if(this.props.route.params.message)
+    {
+      Alert.alert('Success', 'Successfully logged out!');
+      this.props.route.params.message = false;
+    }
+
     return(
       <SafeAreaView style={styles.container}>
+        <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
         <View style={styles.form}>
+          
           <Image style={styles.logo} source={require("./app/assets/logo.png")} />
           <TextInput maxLength={20} style={styles.textInput} placeholder='Username' placeholderTextColor='#ff66ff'
           value={this.state.email} onChangeText={ (val) => this.inputValueUpdate(val, 'email')} leftIcon={{ type: 'font-awesome', name: 'chevron-left' }}/>
@@ -153,6 +166,7 @@ class Login extends Component { // login logic, uses firebase built-in methods t
           <Text style={styles.register} onPress={() => this.props.navigation.navigate('Register')}>Create an account.</Text>
         </View>
         <StatusBar style="auto" />
+        
       </SafeAreaView>
     );
   }
@@ -195,7 +209,7 @@ class Index extends Component { // index page mananger, when user clicks login h
       // bind functions for setState
       this.getPost = this.getPost.bind(this);
   }
-  
+
   componentDidMount() {
     this.getPost();
   }
@@ -251,11 +265,13 @@ class Index extends Component { // index page mananger, when user clicks login h
       
       return (
           <View style={{flex: 1}}>
+            <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
             <Text style={styles.titleHomepage} onPress={() => console.log(this.state.posts)}>FOOD LISTINGS</Text>
             <Divider style={styles.dividerHomepage} />
             <ScrollView showsVerticalScrollIndicator={false}>
               <View>{Posts}</View>
             </ScrollView>  
+            
           </View>
         );
   }
@@ -283,6 +299,7 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
         
       }).then(() => {
         toggleOverlay();
+        DropDownHolder.dropDown.alertWithType('success', 'Post published!', 'Your post was published on ');
       }).catch(error => {
         alert(error);
       })
@@ -344,11 +361,11 @@ const Sell = ({navigation}) => { // sell page, user will be able to sell their O
             <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
           </View>
       </Overlay>
+      <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
       <Text style={{textAlign: 'center', fontSize: 20, fontWeight:'bold', marginBottom: 5, color: '#ff66ff'}}>Create new listing</Text>
       <TouchableOpacity style={styles.addListing} onPress={toggleOverlay}>
         <Text style={{color: 'white', fontSize: 30}}>+</Text>
-      </TouchableOpacity>
-      
+      </TouchableOpacity>   
     </View>
 
   );
@@ -434,6 +451,7 @@ const YourAccount = ({navigation}) => { // the users own profile, view username,
       let user = firebase.auth().currentUser;
       user.updatePassword(password).then(function() {
         toggleOverlay();
+        DropDownHolder.dropDown.alertWithType('success', 'Success ', 'Successfully changed password');
       }).catch(function(error) {
         Alert.alert('Error', 'An error occured please try again.');
         console.log(error);
@@ -449,7 +467,7 @@ const YourAccount = ({navigation}) => { // the users own profile, view username,
 
   const signOut = () => {
     firebase.auth().signOut().then(() => {   
-      navigation.navigate('Login')
+      navigation.navigate('Login', {message: true})
       
 
     }).catch((err) => {
@@ -476,6 +494,7 @@ const YourAccount = ({navigation}) => { // the users own profile, view username,
             <Text style={styles.register} onPress={toggleOverlay}>Go back.</Text>
           </View>
       </Overlay>
+      <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
       <MaterialCommunityIcons name="account-circle" color={'#ff66ff'} size={50}/>
       <Text style={{fontWeight: 'bold'}}>Your Email: {email}</Text>        
       <MaterialCommunityIcons name="lock" color={'#ff66ff'} size={50} style={{marginTop: 20}}/> 
@@ -537,19 +556,17 @@ class ViewPost extends Component {
             <Text style={styles.viewText}>Go back</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.viewButton} onPress={() => {
-          showMessage({
-            message: 'Message sent.',
-            type: 'success'
-          });
+          DropDownHolder.dropDown.alertWithType('success', 'Message sent. ', 'Sent message to ');
         }}>
           <Text style={styles.viewText}>Im interested.</Text>
         </TouchableOpacity>
+        
       </View>
       </Card>
     })
     return(
       <View>
-        <FlashMessage position="top" />
+        <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
         <ScrollView >{currentPost}</ScrollView>
       </View>
     );
@@ -648,6 +665,7 @@ class EditPost extends Component {
     let currentPost = this.state.currentPost.map((element) => {
       let images = element.image;
       return <View>
+        <DropdownAlert ref={(ref) => DropDownHolder.setDropDown(ref)}/>
         <View style={styles.yourAccountChangePassword}>
         <TouchableOpacity style={{marginBottom: 50}} onPress={this.openImagePickerAsync}>
           <MaterialCommunityIcons name='camera' size={50} color='#ff66ff'/>
@@ -674,10 +692,7 @@ class EditPost extends Component {
               <Text style={styles.viewText}>Go back</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.viewButton} onPress={() => {
-            showMessage({
-              message: 'Post Saved.',
-              type: 'success'
-            });
+            DropDownHolder.dropDown.alertWithType('success', 'Saved post', 'Saved changes....');
             this.handlePost();
           }}>
             <Text style={styles.viewText}>SAVE</Text>
@@ -687,7 +702,7 @@ class EditPost extends Component {
     })
     return(
       <View>
-        <FlashMessage position="top" />
+        
         <ScrollView >{currentPost}</ScrollView>
       </View>
     );
@@ -714,7 +729,7 @@ export default function App() { // MAIN APP
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Login" component={Login} options={headerBar}/>
+        <Stack.Screen name="Login" component={Login} options={headerBar} initialParams={{message: false}}/>
         <Stack.Screen name="Register" component={Register} options={headerBar}/>
         <Stack.Screen name="Your Food MarketPlace" component={AppContent} options={headerBar} />
         <Stack.Screen name="View Post" component={ViewPost} options={headerBar}/>
